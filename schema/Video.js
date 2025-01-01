@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema(
   {
@@ -20,6 +21,14 @@ const UserSchema = new mongoose.Schema(
     },
   }
 );
+
+UserSchema.pre('save', async function (next) {
+  if (this.isModified('password') || this.isNew) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+  next();
+});
 
 const LanguageSchema = new mongoose.Schema(
   {
@@ -64,7 +73,13 @@ const ReviewSchema = new mongoose.Schema({
       ref: 'Video',
       required: true,
     },
-    review: {
+    ratings: {
+      lipSync: { type: Number, min: 1, max: 5, required: true },
+      translation: { type: Number, min: 1, max: 5, required: true },
+      audio: { type: Number, min: 1, max: 5, required: true }, 
+      overall: { type: Number, min: 1, max: 5, required: true },
+    },
+    comment: {
       type: String,
       required: true,
     },

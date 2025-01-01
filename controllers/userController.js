@@ -1,34 +1,41 @@
+const bcrypt = require('bcryptjs');
 const { User } = require('../schema/Video');
 
-// const createUser = async (req, res) => {
-//   try {
-//     const { username, mailID, password } = req.body;
-
-//     const userExists = await User.findOne({ $or: [{ mailID }, { username }] });
-//     if (userExists) {
-//       return res.status(400).json({ message: 'Email or Username already exists' });
-//     }
-
-//     const newUser = new User({
-//       username,
-//       mailID,
-//       password,
-//     });
-
-//     await newUser.save();
-//     res.status(201).json({
-//       message: 'User created successfully',
-//       user: {
-//         id: newUser._id,
-//         username: newUser.username,
-//         mailID: newUser.mailID,
-//       },
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: 'Server error, please try again' });
-//   }
-// };
+const signInUser = async (req, res) => {
+  const { username, password, role } = req.body;
+  try {
+    const user = await User.findOne({ username, role });
+    if(!user) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User not found or incorrect role.',
+      });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Incorrect password.',
+      });
+    }
+    res.status(200).json({
+      status: 'success',
+      message: 'Successfully signed in.',
+      user: {
+        id: user._id,
+        username: user.username,
+        mailID: user.mailID,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error. Please try again later.',
+    });
+  }
+}
 
 const createUser = async (req, res) => {
   let { role, username, mailID, password } = req.body;
@@ -145,4 +152,4 @@ const getAllUsers = async (req, res) => {
     }
   };
   
-  module.exports = { createUser, getAllUsers, deleteUser, getUserByUsername };
+  module.exports = { createUser, getAllUsers, deleteUser, getUserByUsername, signInUser };
