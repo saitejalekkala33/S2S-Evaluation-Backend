@@ -45,8 +45,15 @@ const getReview = async (req, res) => {
 
 const getAllReviews = async (req, res) => {
   try {
-    const { videoId } = req.query;
-    const reviews = await Review.find({videoId: videoId});
+    const { username, videoId } = req.query;
+    const filtered ={};
+    if(videoId) {
+      filtered.videoId = videoId;
+    }
+    if (username) {
+      filtered.username = username;
+    }
+    const reviews = await Review.find(filtered);
     const formattedReviews = reviews.map((review) => ({
       _id: review._id,
       username: review.username,
